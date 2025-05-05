@@ -1,12 +1,28 @@
 from village.classes.task import Event, Output, Task
-from village.manager import manager
+
 
 # click on the link below to see the documentation about how to create
 # tasks, plots and training protocols
 # https://braincircuitsbehaviorlab.github.io/village/user_guide/create.html
 
+
 class Habituation(Task):
+    """
+    This class defines the task.
+
+    Required methods to implement:
+    - __init__: Initialize the task
+    - start: Called when the task starts.
+    - create_trial: Called once per trial to create the state machine.
+    - after_trial: Called once after each trial to register the values in the .csv file.
+    - close: Called when the task is finished.
+    """
+
     def __init__(self):
+        """
+        Initialize the training protocol. The text in the self.info variable
+        will be shown when the task is selected in the GUI to be run manually.
+        """
         super().__init__()
 
         self.info = """
@@ -21,72 +37,58 @@ class Habituation(Task):
         both side ports are illuminated and give reward.
         """
 
+
     def start(self):
         """
         This function is called when the task starts.
         It is used to calculate values needed for the task.
         The following variables are accesible by default:
-        - self.bpod: Bpod object
-        - self.settings: Settings object
-        - self.manager: Manager object
-        - self.subject: Subject object
-        - self.task: Task object
-        - self.task_name: Task name
-
-
         - self.bpod: (Bpod object)
         - self.name: (str) the name of the task
-        self.subject: (str) the name of the subject
-        self.current_trial: (int) the current trial number starting from 1
-        self.current_trial_states: (list) information about the current trial
-        self.system_name: (str) the name of the system as defined in the
+                (it is the name of the class, in this case Habituation)
+        - self.subject: (str) the name of the subject performing the task
+        - self.current_trial: (int) the current trial number starting from 1
+        - self.system_name: (str) the name of the system as defined in the
                                 tab settings of the GUI
-        self.settings: (Settings object) the settings defined in training_settings.py
-        self.trial_data: (dict) information about the current trial
-        self.force_stop: (bool) if made true the task will stop
-        self.maximum_number_of_trials: int = 100000000
-        self.chrono = time_utils.Chrono()
+        - self.settings: (Settings object) the settings defined in training_protocol.py
+        - self.trial_data: (dict) information about the current trial
+        - self.force_stop: (bool) if made true the task will stop
 
-        Al the variables created in training_settings.py are accessible here.
+        Al the variables created in training_protocol.py are accessible.
+        - self.settings.reward_amount_ml: reward volume
+        - self.settings.stage: current training stage
+        - self.settings.light_intensity_high: high light intensity
+        - self.settings.light_intensity_low: low light intensity
+        - self.settings.trial_types: possible trial types
+        - self.settings.punishment_time: punishment duration
+        - self.settings.iti_time: inter-trial interval
         """
 
-        # In training_settins we created the following variables that are accesible here:
+        # First we calculate the time that the valves (or pumps) need to open to deliver
+        # the reward amount
+        # Make sure to calibrate the valves before using this function, otherwise
+        # it will return an Exception
+        self.left_valve_opening_time = self.water_calibration.get_valve_time(
+            port=1, volume=self.settings.reward_amount_ml
+        )
+        self.right_valve_opening_time = self.water_calibration.get_valve_time(
+            port=3, volume=self.settings.reward_amount_ml
+        )
 
-        # Time the valve needs to open to deliver the reward amount
-        # Make sure to calibrate the valve before using it, otherwise this function
-        # will return the default value of 0.01 seconds
-
-        # self.left_valve_opening_time = manager.water_calibration.get_valve_time(
-        #     port=1, volume=self.settings.reward_amount_ml
-        # )
-        # self.right_valve_opening_time = manager.water_calibration.get_valve_time(
-        #     port=3, volume=self.settings.reward_amount_ml
-        # )
-
-        # # use maximum light intensity for both side ports
-        # self.light_intensity_left = self.settings.side_port_light_intensities[-1]
-        # self.light_intensity_right = self.settings.side_port_light_intensities[-1]
-
-        self.settings.reward_amount_ml = 0.05
-        self.left_valve_opening_time = 0.01
-        self.right_valve_opening_time = 0.01
-        self.light_intensity_left = 1
-        self.light_intensity_right = 1
-        self.light_intensity_center = 1
 
     def create_trial(self):
         """
-        This function modifies variables and then sends the state machine to the bpod
-        before each trial.
+        This function is called once per trial, first it modifies variables and then
+        sends the state machine to the bpod that will run the trial.
         """
 
-        # 'ready_to_initiate': state that turns on the middle port light and
+        # 'ready_to_initiate': state that turns on the central port light and
         # waits for a poke in the central port (Port2)
         self.bpod.add_state(
             state_name="ready_to_initiate",
             state_timer=0,
             state_change_conditions={Event.Port2In: "stimulus_state"},
-            output_actions=[(Output.PWM2, self.light_intensity_center)],
+            output_actions=[(Output.PWM2, self.settings.light_intensity_high)],
         )
 
         # 'stimulus_state': state that turns on the side ports and
@@ -99,8 +101,8 @@ class Habituation(Task):
                 Event.Port3In: "reward_state_right",
             },
             output_actions=[
-                (Output.PWM1, self.light_intensity_left),
-                (Output.PWM3, self.light_intensity_right),
+                (Output.PWM1, self.settings.light_intensity_high),
+                (Output.PWM3, self.settings.light_intensity_high),
             ],
         )
 
@@ -139,4 +141,4 @@ class Habituation(Task):
         such as sending a message via email or Slack, creating a plot, and more.
         """
 
-        print("closed!!")
+        pass

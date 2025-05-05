@@ -1,11 +1,13 @@
 import time
 
 from sound_functions import sound_device, tone_600
-from village.manager import manager
+from village.manager import get_task
+
+task = get_task()
 
 
 def function1():
-    manager.task.bpod.receive_softcode(1)
+    task.send_softcode_to_bpod(1)
 
 
 def function2():
@@ -18,24 +20,24 @@ def function2():
 
 def function10():
     # to test overriding outputs
-    manager.task.bpod.manual_override_output(("PWM1", 255))  # funciona
+    task.bpod.manual_override_output(("PWM1", 255))  # funciona
     time.sleep(1)
-    manager.task.bpod.manual_override_output(("PWM1", 0))  # funciona
+    task.bpod.manual_override_output(("PWM1", 0))  # funciona
     time.sleep(1)
-    manager.task.bpod.manual_override_output("Valve1")
+    task.bpod.manual_override_output("Valve1")
     time.sleep(1)
-    manager.task.bpod.manual_override_output("Valve1Off")
+    task.bpod.manual_override_output("Valve1Off")
     time.sleep(1)
-    manager.task.bpod.manual_override_output("BNC1High")  # funciona
+    task.bpod.manual_override_output("BNC1High")  # funciona
     time.sleep(1)
-    manager.task.bpod.manual_override_output("BNC1Low")  # funciona
+    task.bpod.manual_override_output("BNC1Low")  # funciona
 
 
 def function11():
     # to test overriding inputs
-    manager.task.bpod.manual_override_input("Port1In")  # funciona
+    task.bpod.manual_override_input("Port1In")  # funciona
     time.sleep(1)
-    manager.task.bpod.manual_override_input("Port1Out")  # funciona
+    task.bpod.manual_override_input("Port1Out")  # funciona
     time.sleep(1)
 
 

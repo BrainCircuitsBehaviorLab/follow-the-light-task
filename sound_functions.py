@@ -80,8 +80,8 @@ def whitenoise(duration: float, gain: float) -> np.ndarray:
     return whitenoise_generator(duration=duration, gain=gain, ramp_time=0.005)
 
 
-def tone_600(duration: float, gainer: float) -> np.ndarray:
-    return tone_generator(duration=duration, gain=gainer, frequency=600, ramp_time=0.005)
+def tone_600(duration: float, gain: float) -> np.ndarray:
+    return tone_generator(duration=duration, gain=gain, frequency=600, ramp_time=0.005)
 
 
 def tone_1000(duration: float, gain: float) -> np.ndarray:
